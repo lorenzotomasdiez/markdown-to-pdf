@@ -1,0 +1,47 @@
+{
+  "name": "markdown-to-pdf",
+  "version": "1.0.0",
+  "description": "Fast Markdown to PDF converter with Mermaid and Math support",
+  "main": "dist/index.js",
+  "bin": {
+    "md2pdf": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
+  },
+  "keywords": [
+    "markdown",
+    "pdf",
+    "mermaid",
+    "katex"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/katex": "^0.16.8",
+    "@types/markdown-it": "^14.1.2",
+    "@types/pdfkit": "^0.17.5",
+    "happy-dom": "^20.7.0",
+    "highlight.js": "^11.11.1",
+    "katex": "^0.16.33",
+    "latex-to-unicode": "^0.1.0",
+    "markdown-it": "^14.1.1",
+    "mathjax-full": "^3.2.1",
+    "mermaid": "^11.12.3",
+    "pdfkit": "^0.17.2",
+    "svg-to-pdfkit": "^0.1.8"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "@vitest/ui": "^4.0.18",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}

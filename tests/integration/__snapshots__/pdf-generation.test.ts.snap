@@ -1,0 +1,284 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Advanced Elements > should render horizontal rule - snapshot 1`] = `
+[
+  {
+    "content": "Before",
+    "hasMath": false,
+    "type": "paragraph",
+  },
+  {
+    "type": "hr",
+  },
+  {
+    "content": "After",
+    "hasMath": false,
+    "type": "paragraph",
+  },
+]
+`;
+
+exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Advanced Elements > should render math expressions - snapshot 1`] = `
+[
+  {
+    "content": "Inline: $x^2$ and display: $$y = mx + b$$",
+    "hasMath": true,
+    "type": "paragraph",
+  },
+]
+`;
+
+exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Advanced Elements > should render table - snapshot 1`] = `
+[
+  {
+    "attrs": {
+      "headers": [
+        "Header 1",
+        "Header 2",
+      ],
+      "rows": [
+        [
+          "Data 1",
+          "Data 2",
+        ],
+      ],
+    },
+    "type": "table",
+  },
+]
+`;
+
+exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Code and Quotes > should render blockquote - snapshot 1`] = `
+[
+  {
+    "content": "This is a famous quote spanning multiple lines",
+    "type": "blockquote",
+  },
+]
+`;
+
+exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Code and Quotes > should render code block - snapshot 1`] = `
+[
+  {
+    "attrs": {
+      "lang": "javascript",
+    },
+    "content": "const x = 42;
+console.log(x);
+",
+    "type": "code",
+  },
+]
+`;
+
+exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Complex Documents - Full Snapshots > should parse complete document correctly - snapshot 1`] = `
+[
+  {
+    "attrs": {
+      "level": 1,
+    },
+    "content": "Document Title",
+    "type": "heading",
+  },
+  {
+    "content": "This is the introduction paragraph.",
+    "hasMath": false,
+    "type": "paragraph",
+  },
+  {
+    "attrs": {
+      "level": 2,
+    },
+    "content": "Section 1",
+    "type": "heading",
+  },
+  {
+    "content": "Here’s a list:",
+    "hasMath": false,
+    "type": "paragraph",
+  },
+  {
+    "attrs": {
+      "ordered": false,
+    },
+    "children": [
+      {
+        "content": "Item 1",
+        "type": "list_item",
+      },
+      {
+        "content": "Item 2",
+        "type": "list_item",
+      },
+      {
+        "content": "Item 3",
+        "type": "list_item",
+      },
+    ],
+    "type": "list",
+  },
+  {
+    "attrs": {
+      "level": 3,
+    },
+    "content": "Subsection",
+    "type": "heading",
+  },
+  {
+    "content": "Some code:",
+    "hasMath": false,
+    "type": "paragraph",
+  },
+  {
+    "attrs": {
+      "lang": "javascript",
+    },
+    "content": "function demo() {
+  return 42;
+}
+",
+    "type": "code",
+  },
+  {
+    "attrs": {
+      "level": 2,
+    },
+    "content": "Section 2",
+    "type": "heading",
+  },
+  {
+    "attrs": {
+      "headers": [
+        "Feature",
+        "Status",
+      ],
+      "rows": [
+        [
+          "Feature A",
+          "Done",
+        ],
+        [
+          "Feature B",
+          "Done",
+        ],
+      ],
+    },
+    "type": "table",
+  },
+  {
+    "content": "Important quote here",
+    "type": "blockquote",
+  },
+  {
+    "type": "hr",
+  },
+  {
+    "content": "Final section.",
+    "hasMath": false,
+    "type": "paragraph",
+  },
+]
+`;
+
+exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Simple Elements > should render heading correctly - snapshot 1`] = `
+[
+  {
+    "attrs": {
+      "level": 1,
+    },
+    "content": "Main Title",
+    "type": "heading",
+  },
+]
+`;
+
+exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Simple Elements > should render ordered list - snapshot 1`] = `
+[
+  {
+    "attrs": {
+      "ordered": true,
+    },
+    "children": [
+      {
+        "content": "First",
+        "type": "list_item",
+      },
+      {
+        "content": "Second",
+        "type": "list_item",
+      },
+      {
+        "content": "Third",
+        "type": "list_item",
+      },
+    ],
+    "type": "list",
+  },
+]
+`;
+
+exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Simple Elements > should render paragraph correctly - snapshot 1`] = `
+[
+  {
+    "content": "This is a simple paragraph.",
+    "hasMath": false,
+    "type": "paragraph",
+  },
+]
+`;
+
+exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Simple Elements > should render unordered list - snapshot 1`] = `
+[
+  {
+    "attrs": {
+      "ordered": false,
+    },
+    "children": [
+      {
+        "content": "Item 1",
+        "type": "list_item",
+      },
+      {
+        "content": "Item 2",
+        "type": "list_item",
+      },
+      {
+        "content": "Item 3",
+        "type": "list_item",
+      },
+    ],
+    "type": "list",
+  },
+]
+`;
+
+exports[`PDF Generator Integration Tests > PDF Generation with Content > should generate PDF from code blocks - snapshot 1`] = `
+{
+  "size": 1760,
+}
+`;
+
+exports[`PDF Generator Integration Tests > PDF Generation with Content > should generate PDF from heading - snapshot buffer size 1`] = `
+{
+  "isValid": true,
+  "size": 1436,
+}
+`;
+
+exports[`PDF Generator Integration Tests > PDF Generation with Content > should generate PDF from lists - snapshot 1`] = `
+{
+  "size": 1560,
+}
+`;
+
+exports[`PDF Generator Integration Tests > PDF Generation with Content > should generate PDF from table - snapshot 1`] = `
+{
+  "size": 1703,
+}
+`;
+
+exports[`PDF Generator Integration Tests > PDF Generation with Content > should handle multiline content properly - snapshot 1`] = `
+{
+  "size": 2056,
+}
+`;
