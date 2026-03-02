@@ -1,2 +1,25 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Claude Code local settings
+.claude/
+
+# Test/scratch PDFs
+*.pdf
+
+# Temporary files
+*.log
+*.tmp
+
+# Environment files
+.env
+.env.*
+!.env.example
