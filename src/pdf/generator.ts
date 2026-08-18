@@ -7,6 +7,8 @@ import {
   renderHeading,
   renderText,
   renderList,
+  renderListItem,
+  listMarker,
   renderCodeBlock,
   renderBlockquote,
   renderTable,
@@ -90,16 +92,15 @@ export async function generatePDF(markdown: string, outputPath: string, options:
 async function renderElement(ctx: RenderContext, element: any): Promise<void> {
   switch (element.type) {
     case 'heading':
-      renderHeading(ctx, element.attrs.level, element.content);
+      renderHeading(ctx, element.attrs.level, richText(element));
       break;
 
     case 'paragraph':
-      await renderParagraphWithMath(ctx, element.content, element.hasMath);
+      await renderParagraphWithMath(ctx, element.content, element.hasMath, element.spans);
       break;
 
     case 'list':
-      const items = element.children?.map((c: any) => c.content) || [];
-      renderList(ctx, items, element.attrs.ordered);
+      await renderListElement(ctx, element, 0);
       break;
 
     case 'code':
@@ -107,11 +108,14 @@ async function renderElement(ctx: RenderContext, element: any): Promise<void> {
       break;
 
     case 'blockquote':
-      renderBlockquote(ctx, element.content);
+      renderBlockquote(ctx, richText(element));
       break;
 
     case 'table':
-      renderTable(ctx, element.attrs.headers, element.attrs.rows);
+      renderTable(ctx, element.attrs.headers, element.attrs.rows, {
+        headerSpans: element.attrs.headerSpans,
+        rowSpans: element.attrs.rowSpans,
+      });
       break;
 
     case 'hr':
@@ -127,9 +131,43 @@ async function renderElement(ctx: RenderContext, element: any): Promise<void> {
   }
 }
 
-async function renderParagraphWithMath(ctx: RenderContext, content: string, hasMath: boolean): Promise<void> {
+/** Formatted runs when the parser produced them, plain text otherwise. */
+function richText(element: any): any {
+  return element.spans && element.spans.length > 0 ? element.spans : element.content || '';
+}
+
+/**
+ * Render a list, keeping each item's nested blocks (sub-lists, code) attached
+ * to the item they belong to and indented one level further.
+ */
+async function renderListElement(ctx: RenderContext, element: any, depth: number): Promise<void> {
+  const { doc } = ctx;
+  const ordered = !!element.attrs?.ordered;
+  const start = element.attrs?.start ?? 1;
+  const items = element.children || [];
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    renderListItem(ctx, richText(item), listMarker(ordered, start + i, depth), { depth, ordered });
+
+    for (const child of item.children || []) {
+      doc.moveDown(0.2);
+      if (child.type === 'list') {
+        await renderListElement(ctx, child, depth + 1);
+      } else {
+        await renderElement(ctx, child);
+      }
+    }
+
+    if (i < items.length - 1) doc.moveDown(0.25);
+  }
+
+  doc.moveDown(0.3);
+}
+
+async function renderParagraphWithMath(ctx: RenderContext, content: string, hasMath: boolean, spans?: any[]): Promise<void> {
   if (!hasMath) {
-    renderText(ctx, content);
+    renderText(ctx, spans && spans.length > 0 ? spans : content);
     return;
   }
 

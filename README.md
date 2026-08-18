@@ -4,7 +4,9 @@ A fast, reliable Markdown to PDF converter with first-class support for **Mermai
 
 ## Features
 
-- **Full Markdown support** — headings, paragraphs, lists, code blocks, blockquotes, tables, horizontal rules
+- **Full Markdown support** — headings, paragraphs, lists (nested included), code blocks, blockquotes, tables, horizontal rules
+- **Inline formatting preserved**: bold, italic, inline code and clickable links keep their styling in the PDF
+- **Line breaks respected**: a line break in the source is a line break in the PDF, so one-sentence-per-line documents read the same
 - **Mermaid diagrams** — rendered as vector SVG graphics embedded directly in the PDF
 - **LaTeX math** — display math rendered via MathJax as proper typeset SVG; inline math converted to Unicode
 - **Syntax-highlighted code blocks** — via highlight.js
@@ -115,6 +117,8 @@ interface GeneratePDFOptions {
 ```typescript
 import {
   parseMarkdown,            // Markdown → AST
+  renderInlineSpans,        // Draw formatted text runs onto a PDFKit document
+  splitSpansIntoLines,      // Split formatted runs on source line breaks
   renderMermaidToSVG,       // Mermaid code → { svg, height }
   latexToUnicode,           // LaTeX → Unicode string
   extractMathExpressions,   // Find $...$ / $$...$$ in text
@@ -136,13 +140,33 @@ import {
 ###### H6 — 10pt bold
 ```
 
+### Inline formatting
+
+```markdown
+**bold**, *italic*, `inline code` and [links](https://example.com) are rendered
+with the matching font and stay clickable in the PDF.
+```
+
+### Line breaks
+
+A single newline inside a paragraph or list item is kept as a line break, and
+`3.` starts an ordered list at three.
+
+```markdown
+First sentence on its own line.
+Second sentence on its own line.
+```
+
 ### Lists
 
 ```markdown
 - Unordered item
 - Another item
+  - Nested item
+  - Another nested item
 
 1. Ordered item
+   Continuation line of the same item.
 2. Another item
 ```
 
@@ -159,6 +183,9 @@ function greet(name: string): string {
 ````
 
 ### Tables
+
+Column widths follow the content, cells wrap to as many lines as they need, and
+a table longer than the page repeats its header on the next one.
 
 ```markdown
 | Header 1 | Header 2 | Header 3 |
@@ -265,6 +292,7 @@ src/
 │   └── generator.ts      # PDF generation pipeline
 └── renderers/
     ├── standard.ts       # Headings, lists, tables, blockquotes
+    ├── inline.ts         # Formatted text runs (bold / italic / code / links)
     ├── code.ts           # Syntax-highlighted code blocks
     ├── math.ts           # LaTeX math → Unicode / MathJax SVG
     └── mermaid.ts        # Mermaid diagrams → SVG

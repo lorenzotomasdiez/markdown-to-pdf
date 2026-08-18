@@ -1,11 +1,20 @@
 import PDFDocument from 'pdfkit';
+import { InlineSpan } from '../types.js';
+import { cleanSpans, fontForSpan, renderInlineSpans, splitSpansIntoLines } from './inline.js';
+
+/** Text that renderers accept: either plain text or formatted runs. */
+export type RichText = string | InlineSpan[];
+
+function toSpans(text: RichText): InlineSpan[] {
+  return typeof text === 'string' ? [{ text }] : text;
+}
 
 /**
  * Remove characters outside the Basic Multilingual Plane that PDFKit's
  * built-in fonts (Helvetica, Courier, Times-Roman) cannot render.
  * Emoji and other non-BMP codepoints would appear as '?' or corrupt output.
  */
-function sanitizeText(text: string): string {
+export function sanitizeText(text: string): string {
   if (!text) return '';
   // Replace emoji and non-BMP characters (U+10000+) with an empty string
   // Also replace common problematic Unicode symbols that fall outside Latin extended
@@ -50,7 +59,7 @@ export function checkPageBreak(ctx: RenderContext, requiredHeight: number): void
   }
 }
 
-export function renderHeading(ctx: RenderContext, level: number, content: string): void {
+export function renderHeading(ctx: RenderContext, level: number, content: RichText): void {
   const { doc, margins, pageWidth, options } = ctx;
   const sizes = [24, 20, 16, 14, 12, 10];
   const fontSize = options.fontSize ? options.fontSize * (sizes[level - 1] / 12) : sizes[level - 1];
@@ -63,29 +72,70 @@ export function renderHeading(ctx: RenderContext, level: number, content: string
     doc.moveDown(0.5);
   }
 
-  doc.fontSize(fontSize).font('Helvetica-Bold').fillColor('black');
-  doc.text(sanitizeText(content), margins.left, doc.y, { width: maxWidth, continued: false });
+  renderInlineSpans(ctx, toSpans(content), {
+    x: margins.left,
+    y: doc.y,
+    width: maxWidth,
+    fontSize,
+    bold: true,
+  });
   doc.moveDown(0.3);
 }
 
-export function renderList(ctx: RenderContext, items: string[], ordered: boolean): void {
-  const { doc, margins, pageWidth, options } = ctx;
-  const fontSize = options.fontSize || 12;
-  const indent = 20;
-  const maxWidth = pageWidth - margins.left - margins.right - indent;
+export interface ListOptions {
+  /** Nesting depth; 0 is a top-level list. */
+  depth?: number;
+  /** First number of an ordered list (markdown `3.` starts at 3). */
+  start?: number;
+}
+
+export const BULLETS = ['\u2022', '-', '\u00b7'];
+
+export function renderList(ctx: RenderContext, items: RichText[], ordered: boolean, listOptions: ListOptions = {}): void {
+  const { doc } = ctx;
+  const depth = listOptions.depth || 0;
+  const start = listOptions.start ?? 1;
 
   items.forEach((item, index) => {
-    checkPageBreak(ctx, fontSize * 2);
-    const prefix = ordered ? `${index + 1}.` : '•';
-
-    doc.fontSize(fontSize).font('Helvetica').fillColor('black');
-    // Capture Y before any text call so bullet and text share the same baseline
-    const lineY = doc.y;
-    doc.text(prefix, margins.left, lineY, { width: indent - 4, lineBreak: false });
-    doc.text(sanitizeText(item), margins.left + indent, lineY, { width: maxWidth, continued: false });
+    renderListItem(ctx, item, listMarker(ordered, start + index, depth), { depth, ordered });
+    // Breathing room between items; multi-line items would otherwise run together
+    if (index < items.length - 1) doc.moveDown(0.25);
   });
 
   doc.moveDown(0.3);
+}
+
+export function listMarker(ordered: boolean, number: number, depth: number): string {
+  return ordered ? `${number}.` : BULLETS[depth % BULLETS.length];
+}
+
+/** Render one item: marker in the gutter, text in a hanging-indent column. */
+export function renderListItem(
+  ctx: RenderContext,
+  item: RichText,
+  marker: string,
+  itemOptions: { depth?: number; ordered?: boolean } = {}
+): void {
+  const { doc, margins, pageWidth, options } = ctx;
+  const fontSize = options.fontSize || 12;
+  const depth = itemOptions.depth || 0;
+  const markerWidth = itemOptions.ordered ? 24 : 18;
+  const left = margins.left + depth * 22;
+  const textX = left + markerWidth;
+  const maxWidth = pageWidth - margins.right - textX;
+
+  checkPageBreak(ctx, fontSize * 2);
+
+  doc.fontSize(fontSize).font('Helvetica').fillColor('black');
+  // Capture Y before any text call so marker and text share the same baseline
+  const lineY = doc.y;
+  doc.text(marker, left, lineY, { width: markerWidth - 4, lineBreak: false, link: null });
+  renderInlineSpans(ctx, toSpans(item), {
+    x: textX,
+    y: lineY,
+    width: maxWidth,
+    fontSize,
+  });
 }
 
 export function renderCodeBlock(ctx: RenderContext, code: string, lang: string): void {
@@ -119,11 +169,13 @@ export function renderCodeBlock(ctx: RenderContext, code: string, lang: string):
   doc.moveDown(0.8);
 }
 
-export function renderBlockquote(ctx: RenderContext, content: string): void {
+export function renderBlockquote(ctx: RenderContext, content: RichText): void {
   const { doc, margins, pageWidth } = ctx;
   const fontSize = ctx.options.fontSize || 12;
   const maxWidth = pageWidth - margins.left - margins.right - 30;
-  const estimatedHeight = fontSize * 1.4 * (Math.ceil(content.length / 80) + 1) + 20;
+  const quoteSpans = toSpans(content);
+  const quoteLength = quoteSpans.reduce((total, span) => total + span.text.length, 0);
+  const estimatedHeight = fontSize * 1.4 * (Math.ceil(quoteLength / 80) + 1) + 20;
 
   checkPageBreak(ctx, estimatedHeight);
 
@@ -132,10 +184,13 @@ export function renderBlockquote(ctx: RenderContext, content: string): void {
   // Render quote text first so we can measure the actual rendered height.
   // The accent bar is only 3pt wide and sits to the LEFT of the text (margin.left),
   // so drawing it after the text doesn't obscure anything.
-  doc.fontSize(fontSize).font('Helvetica-Oblique').fillColor('#555');
-  doc.text(sanitizeText(content), margins.left + 14, quoteTop + 8, {
+  renderInlineSpans(ctx, quoteSpans, {
+    x: margins.left + 14,
+    y: quoteTop + 8,
     width: maxWidth,
-    lineBreak: true,
+    fontSize,
+    italic: true,
+    color: '#555',
   });
 
   const quoteBottom = doc.y + 8; // add small bottom padding
@@ -147,74 +202,146 @@ export function renderBlockquote(ctx: RenderContext, content: string): void {
   doc.moveDown(0.6);
 }
 
-export function renderTable(ctx: RenderContext, headers: string[], rows: string[][]): void {
-  const { doc, margins, pageWidth } = ctx;
-  const fontSize = 10;
-  const cellPadding = 6;
-  const totalWidth = pageWidth - margins.left - margins.right;
-  const colWidth = totalWidth / headers.length;
+const TABLE_FONT_SIZE = 10;
+const TABLE_PADDING = 6;
 
-  // Estimate total height to check for page break
-  const rowHeight = fontSize * 1.4 + cellPadding * 2;
-  const totalHeight = rowHeight * (rows.length + 1) + 10;
-  checkPageBreak(ctx, totalHeight);
+/**
+ * Measure the natural (unwrapped) width of a cell so columns can be sized by
+ * their content instead of splitting the page into equal slices.
+ */
+function measureSpans(doc: any, spans: InlineSpan[], fontSize: number, bold: boolean): number {
+  return cleanSpans(spans).reduce((total, span) => {
+    doc.font(fontForSpan(span, bold)).fontSize(span.code ? fontSize * 0.94 : fontSize);
+    // Only the longest source line matters: shorter ones never drive the width
+    const longest = span.text.split('\n').reduce((a, b) => (a.length >= b.length ? a : b), '');
+    return total + doc.widthOfString(longest);
+  }, 0);
+}
 
-  let tableTop = doc.y;
+function measureSpansHeight(doc: any, spans: InlineSpan[], width: number, fontSize: number, bold: boolean): number {
+  const lines = splitSpansIntoLines(cleanSpans(spans));
+  let height = 0;
 
-  // ── Header row ──────────────────────────────────────────────
-  doc.rect(margins.left, tableTop, totalWidth, rowHeight).fill('#f0f0f0');
+  for (const line of lines) {
+    if (line.length === 0) {
+      height += fontSize * 0.5;
+      continue;
+    }
+    // Approximate the wrapped height by measuring the line as one string in the
+    // dominant font; mixed fonts differ slightly but never by a whole line.
+    const text = line.map((span) => span.text).join('');
+    const bolded = line.some((span) => span.bold) || bold;
+    doc.font(bolded ? 'Helvetica-Bold' : 'Helvetica').fontSize(fontSize);
+    height += doc.heightOfString(text, { width });
+  }
 
-  doc.fontSize(fontSize).font('Helvetica-Bold').fillColor('black');
-  headers.forEach((header, col) => {
-    const x = margins.left + col * colWidth;
-    doc.text(sanitizeText(header), x + cellPadding, tableTop + cellPadding, {
-      width: colWidth - cellPadding * 2,
-      lineBreak: false,
-      ellipsis: true,
-    });
+  return height;
+}
+
+function computeColumnWidths(doc: any, columns: InlineSpan[][][], totalWidth: number): number[] {
+  const count = columns.length;
+  const minWidth = Math.min(60, totalWidth / count);
+
+  const natural = columns.map((cells, index) => {
+    const widths = cells.map((cell, row) => measureSpans(doc, cell, TABLE_FONT_SIZE, row === 0));
+    return Math.max(minWidth, Math.max(...widths, 0) + TABLE_PADDING * 2);
   });
 
-  // Bottom border of header
-  let currentY = tableTop + rowHeight;
-  doc.moveTo(margins.left, currentY).lineTo(margins.left + totalWidth, currentY).lineWidth(1).stroke('#999');
+  const naturalTotal = natural.reduce((a, b) => a + b, 0);
+  if (naturalTotal <= totalWidth) {
+    // Everything fits: hand the slack to the widest columns
+    const slack = totalWidth - naturalTotal;
+    return natural.map((w) => w + (slack * w) / naturalTotal);
+  }
 
-  // ── Data rows ──────────────────────────────────────────────
-  doc.fontSize(fontSize).font('Helvetica').fillColor('black');
+  // Too wide: cap greedy columns, then share the page proportionally
+  const cap = totalWidth * 0.5;
+  const weights = natural.map((w) => Math.min(w, cap));
+  const weightTotal = weights.reduce((a, b) => a + b, 0);
+  return weights.map((w) => (totalWidth * w) / weightTotal);
+}
 
-  rows.forEach((row, rowIndex) => {
-    // Alternating row background
-    if (rowIndex % 2 === 0) {
-      doc.rect(margins.left, currentY, totalWidth, rowHeight).fill('#fafafa');
+export function renderTable(ctx: RenderContext, headers: RichText[], rows: RichText[][], spanData?: { headerSpans?: InlineSpan[][]; rowSpans?: InlineSpan[][][] }): void {
+  const { doc, margins, pageWidth } = ctx;
+  const totalWidth = pageWidth - margins.left - margins.right;
+
+  const headerCells: InlineSpan[][] = spanData?.headerSpans?.length
+    ? spanData.headerSpans
+    : headers.map((h) => toSpans(h));
+  const bodyCells: InlineSpan[][][] = spanData?.rowSpans?.length
+    ? spanData.rowSpans
+    : rows.map((row) => row.map((cell) => toSpans(cell)));
+
+  if (headerCells.length === 0) return;
+
+  // Columns as [header, ...cells] so widths account for every row
+  const columns: InlineSpan[][][] = headerCells.map((header, col) => [
+    header,
+    ...bodyCells.map((row) => row[col] || []),
+  ]);
+  const colWidths = computeColumnWidths(doc, columns, totalWidth);
+  const colX = colWidths.map((_, index) => margins.left + colWidths.slice(0, index).reduce((a, b) => a + b, 0));
+
+  const rowHeight = (cells: InlineSpan[][], bold: boolean): number => {
+    const contentHeight = Math.max(
+      ...cells.map((cell, col) => measureSpansHeight(doc, cell, colWidths[col] - TABLE_PADDING * 2, TABLE_FONT_SIZE, bold)),
+      TABLE_FONT_SIZE
+    );
+    return contentHeight + TABLE_PADDING * 2;
+  };
+
+  const drawRow = (cells: InlineSpan[][], height: number, bold: boolean, background?: string): void => {
+    const top = doc.y;
+    if (background) {
+      doc.rect(margins.left, top, totalWidth, height).fill(background);
     }
 
-    row.forEach((cell, col) => {
-      const x = margins.left + col * colWidth;
-      doc.fillColor('black');
-      doc.text(sanitizeText(cell), x + cellPadding, currentY + cellPadding, {
-        width: colWidth - cellPadding * 2,
-        lineBreak: false,
-        ellipsis: true,
+    cells.forEach((cell, col) => {
+      renderInlineSpans(ctx, cell, {
+        x: colX[col] + TABLE_PADDING,
+        y: top + TABLE_PADDING,
+        width: colWidths[col] - TABLE_PADDING * 2,
+        fontSize: TABLE_FONT_SIZE,
+        bold,
       });
     });
 
-    currentY += rowHeight;
+    doc.y = top + height;
+    doc.moveTo(margins.left, doc.y).lineTo(margins.left + totalWidth, doc.y).lineWidth(0.5).stroke('#ddd');
+  };
 
-    // Row separator
-    doc.moveTo(margins.left, currentY).lineTo(margins.left + totalWidth, currentY).lineWidth(0.5).stroke('#ddd');
+  const headerHeight = rowHeight(headerCells, true);
+  checkPageBreak(ctx, headerHeight * 2);
+
+  let sectionTop = doc.y;
+  drawRow(headerCells, headerHeight, true, '#f0f0f0');
+
+  bodyCells.forEach((row, rowIndex) => {
+    const cells = headerCells.map((_, col) => row[col] || []);
+    const height = rowHeight(cells, false);
+
+    if (doc.y + height > ctx.pageHeight - margins.bottom) {
+      // Close the current chunk of the table, then repeat the header on the next page
+      drawTableBorders(ctx, colX, sectionTop, doc.y, totalWidth);
+      doc.addPage();
+      sectionTop = doc.y;
+      drawRow(headerCells, headerHeight, true, '#f0f0f0');
+    }
+
+    drawRow(cells, height, false, rowIndex % 2 === 0 ? '#fafafa' : undefined);
   });
 
-  // ── Column separators ──────────────────────────────────────
-  for (let col = 1; col < headers.length; col++) {
-    const x = margins.left + col * colWidth;
-    doc.moveTo(x, tableTop).lineTo(x, currentY).lineWidth(0.5).stroke('#ddd');
-  }
-
-  // Outer border
-  doc.rect(margins.left, tableTop, totalWidth, currentY - tableTop).stroke('#999');
-
-  // Advance cursor past the table
-  doc.y = currentY;
+  drawTableBorders(ctx, colX, sectionTop, doc.y, totalWidth);
   doc.moveDown(0.8);
+}
+
+function drawTableBorders(ctx: RenderContext, colX: number[], top: number, bottom: number, totalWidth: number): void {
+  const { doc, margins } = ctx;
+
+  for (let col = 1; col < colX.length; col++) {
+    doc.moveTo(colX[col], top).lineTo(colX[col], bottom).lineWidth(0.5).stroke('#ddd');
+  }
+  doc.rect(margins.left, top, totalWidth, bottom - top).lineWidth(1).stroke('#999');
 }
 
 export function renderHorizontalRule(ctx: RenderContext): void {
@@ -233,15 +360,19 @@ export function renderHorizontalRule(ctx: RenderContext): void {
 }
 
 // Helper to render plain text paragraphs
-export function renderText(ctx: RenderContext, content: string): void {
+export function renderText(ctx: RenderContext, content: RichText): void {
   const { doc, margins, pageWidth, options } = ctx;
   const fontSize = options.fontSize || 12;
   const maxWidth = pageWidth - margins.left - margins.right;
 
   checkPageBreak(ctx, fontSize * 3);
 
-  doc.fontSize(fontSize).font('Helvetica').fillColor('black');
-  doc.text(sanitizeText(content), margins.left, doc.y, { width: maxWidth, continued: false });
+  renderInlineSpans(ctx, toSpans(content), {
+    x: margins.left,
+    y: doc.y,
+    width: maxWidth,
+    fontSize,
+  });
   doc.moveDown(0.4);
 }
 

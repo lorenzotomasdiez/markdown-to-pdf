@@ -5,6 +5,11 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Advance
   {
     "content": "Before",
     "hasMath": false,
+    "spans": [
+      {
+        "text": "Before",
+      },
+    ],
     "type": "paragraph",
   },
   {
@@ -13,6 +18,11 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Advance
   {
     "content": "After",
     "hasMath": false,
+    "spans": [
+      {
+        "text": "After",
+      },
+    ],
     "type": "paragraph",
   },
 ]
@@ -23,6 +33,11 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Advance
   {
     "content": "Inline: $x^2$ and display: $$y = mx + b$$",
     "hasMath": true,
+    "spans": [
+      {
+        "text": "Inline: $x^2$ and display: $$y = mx + b$$",
+      },
+    ],
     "type": "paragraph",
   },
 ]
@@ -32,9 +47,35 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Advance
 [
   {
     "attrs": {
+      "headerSpans": [
+        [
+          {
+            "text": "Header 1",
+          },
+        ],
+        [
+          {
+            "text": "Header 2",
+          },
+        ],
+      ],
       "headers": [
         "Header 1",
         "Header 2",
+      ],
+      "rowSpans": [
+        [
+          [
+            {
+              "text": "Data 1",
+            },
+          ],
+          [
+            {
+              "text": "Data 2",
+            },
+          ],
+        ],
       ],
       "rows": [
         [
@@ -51,7 +92,14 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Advance
 exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Code and Quotes > should render blockquote - snapshot 1`] = `
 [
   {
-    "content": "This is a famous quote spanning multiple lines",
+    "content": "This is a famous quote
+spanning multiple lines",
+    "spans": [
+      {
+        "text": "This is a famous quote
+spanning multiple lines",
+      },
+    ],
     "type": "blockquote",
   },
 ]
@@ -78,11 +126,21 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Complex
       "level": 1,
     },
     "content": "Document Title",
+    "spans": [
+      {
+        "text": "Document Title",
+      },
+    ],
     "type": "heading",
   },
   {
     "content": "This is the introduction paragraph.",
     "hasMath": false,
+    "spans": [
+      {
+        "text": "This is the introduction paragraph.",
+      },
+    ],
     "type": "paragraph",
   },
   {
@@ -90,11 +148,21 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Complex
       "level": 2,
     },
     "content": "Section 1",
+    "spans": [
+      {
+        "text": "Section 1",
+      },
+    ],
     "type": "heading",
   },
   {
     "content": "Here’s a list:",
     "hasMath": false,
+    "spans": [
+      {
+        "text": "Here’s a list:",
+      },
+    ],
     "type": "paragraph",
   },
   {
@@ -104,14 +172,32 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Complex
     "children": [
       {
         "content": "Item 1",
+        "hasMath": false,
+        "spans": [
+          {
+            "text": "Item 1",
+          },
+        ],
         "type": "list_item",
       },
       {
         "content": "Item 2",
+        "hasMath": false,
+        "spans": [
+          {
+            "text": "Item 2",
+          },
+        ],
         "type": "list_item",
       },
       {
         "content": "Item 3",
+        "hasMath": false,
+        "spans": [
+          {
+            "text": "Item 3",
+          },
+        ],
         "type": "list_item",
       },
     ],
@@ -122,11 +208,21 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Complex
       "level": 3,
     },
     "content": "Subsection",
+    "spans": [
+      {
+        "text": "Subsection",
+      },
+    ],
     "type": "heading",
   },
   {
     "content": "Some code:",
     "hasMath": false,
+    "spans": [
+      {
+        "text": "Some code:",
+      },
+    ],
     "type": "paragraph",
   },
   {
@@ -144,13 +240,56 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Complex
       "level": 2,
     },
     "content": "Section 2",
+    "spans": [
+      {
+        "text": "Section 2",
+      },
+    ],
     "type": "heading",
   },
   {
     "attrs": {
+      "headerSpans": [
+        [
+          {
+            "text": "Feature",
+          },
+        ],
+        [
+          {
+            "text": "Status",
+          },
+        ],
+      ],
       "headers": [
         "Feature",
         "Status",
+      ],
+      "rowSpans": [
+        [
+          [
+            {
+              "text": "Feature A",
+            },
+          ],
+          [
+            {
+              "text": "Done",
+            },
+          ],
+        ],
+        [
+          [
+            {
+              "text": "Feature B",
+            },
+          ],
+          [
+            {
+              "text": "Done",
+            },
+          ],
+        ],
       ],
       "rows": [
         [
@@ -167,6 +306,11 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Complex
   },
   {
     "content": "Important quote here",
+    "spans": [
+      {
+        "text": "Important quote here",
+      },
+    ],
     "type": "blockquote",
   },
   {
@@ -175,6 +319,11 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Complex
   {
     "content": "Final section.",
     "hasMath": false,
+    "spans": [
+      {
+        "text": "Final section.",
+      },
+    ],
     "type": "paragraph",
   },
 ]
@@ -187,6 +336,11 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Simple 
       "level": 1,
     },
     "content": "Main Title",
+    "spans": [
+      {
+        "text": "Main Title",
+      },
+    ],
     "type": "heading",
   },
 ]
@@ -197,18 +351,37 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Simple 
   {
     "attrs": {
       "ordered": true,
+      "start": 1,
     },
     "children": [
       {
         "content": "First",
+        "hasMath": false,
+        "spans": [
+          {
+            "text": "First",
+          },
+        ],
         "type": "list_item",
       },
       {
         "content": "Second",
+        "hasMath": false,
+        "spans": [
+          {
+            "text": "Second",
+          },
+        ],
         "type": "list_item",
       },
       {
         "content": "Third",
+        "hasMath": false,
+        "spans": [
+          {
+            "text": "Third",
+          },
+        ],
         "type": "list_item",
       },
     ],
@@ -222,6 +395,11 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Simple 
   {
     "content": "This is a simple paragraph.",
     "hasMath": false,
+    "spans": [
+      {
+        "text": "This is a simple paragraph.",
+      },
+    ],
     "type": "paragraph",
   },
 ]
@@ -236,14 +414,32 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Simple 
     "children": [
       {
         "content": "Item 1",
+        "hasMath": false,
+        "spans": [
+          {
+            "text": "Item 1",
+          },
+        ],
         "type": "list_item",
       },
       {
         "content": "Item 2",
+        "hasMath": false,
+        "spans": [
+          {
+            "text": "Item 2",
+          },
+        ],
         "type": "list_item",
       },
       {
         "content": "Item 3",
+        "hasMath": false,
+        "spans": [
+          {
+            "text": "Item 3",
+          },
+        ],
         "type": "list_item",
       },
     ],
@@ -254,31 +450,31 @@ exports[`PDF Generator Integration Tests > Content Rendering Snapshots > Simple 
 
 exports[`PDF Generator Integration Tests > PDF Generation with Content > should generate PDF from code blocks - snapshot 1`] = `
 {
-  "size": 1760,
+  "size": 1765,
 }
 `;
 
 exports[`PDF Generator Integration Tests > PDF Generation with Content > should generate PDF from heading - snapshot buffer size 1`] = `
 {
   "isValid": true,
-  "size": 1436,
+  "size": 1441,
 }
 `;
 
 exports[`PDF Generator Integration Tests > PDF Generation with Content > should generate PDF from lists - snapshot 1`] = `
 {
-  "size": 1560,
+  "size": 1564,
 }
 `;
 
 exports[`PDF Generator Integration Tests > PDF Generation with Content > should generate PDF from table - snapshot 1`] = `
 {
-  "size": 1703,
+  "size": 1721,
 }
 `;
 
 exports[`PDF Generator Integration Tests > PDF Generation with Content > should handle multiline content properly - snapshot 1`] = `
 {
-  "size": 2056,
+  "size": 2092,
 }
 `;

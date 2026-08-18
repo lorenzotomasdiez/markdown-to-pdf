@@ -217,3 +217,88 @@ console.log("hello");
     });
   });
 });
+
+describe('Inline formatting', () => {
+  it('should mark bold spans', () => {
+    const result = parseMarkdown('plain **bold** plain');
+    const spans = result[0].spans || [];
+    expect(spans.map((s) => s.text)).toEqual(['plain ', 'bold', ' plain']);
+    expect(spans[1].bold).toBe(true);
+  });
+
+  it('should mark italic spans', () => {
+    const spans = parseMarkdown('an *emphasis* here')[0].spans || [];
+    expect(spans.find((s) => s.text === 'emphasis')?.italic).toBe(true);
+  });
+
+  it('should mark inline code spans', () => {
+    const spans = parseMarkdown('use `npm test` now')[0].spans || [];
+    expect(spans.find((s) => s.text === 'npm test')?.code).toBe(true);
+  });
+
+  it('should keep the link target on link spans', () => {
+    const spans = parseMarkdown('see [docs](https://example.com/x)')[0].spans || [];
+    expect(spans.find((s) => s.text === 'docs')?.link).toBe('https://example.com/x');
+  });
+
+  it('should combine nested bold and italic', () => {
+    const spans = parseMarkdown('***both***')[0].spans || [];
+    expect(spans[0].bold).toBe(true);
+    expect(spans[0].italic).toBe(true);
+  });
+
+  it('should keep source line breaks inside a paragraph', () => {
+    const result = parseMarkdown('first sentence.\nsecond sentence.');
+    expect(result).toHaveLength(1);
+    expect(result[0].content).toBe('first sentence.\nsecond sentence.');
+    expect((result[0].spans || [])[0].text).toContain('\n');
+  });
+
+  it('should give headings spans too', () => {
+    const spans = parseMarkdown('# A **bold** title')[0].spans || [];
+    expect(spans.find((s) => s.text === 'bold')?.bold).toBe(true);
+  });
+});
+
+describe('List structure', () => {
+  it('should keep line breaks inside a list item', () => {
+    const items = parseMarkdown('1. first line\n   second line')[0].children || [];
+    expect(items[0].content).toBe('first line\nsecond line');
+  });
+
+  it('should keep every paragraph of a loose list item', () => {
+    const items = parseMarkdown('- one\n\n- two\n\n  three')[0].children || [];
+    expect(items[1].content).toBe('two\nthree');
+  });
+
+  it('should format list item content', () => {
+    const items = parseMarkdown('- an **important** item')[0].children || [];
+    expect((items[0].spans || []).find((s) => s.text === 'important')?.bold).toBe(true);
+  });
+
+  it('should nest sub-lists under their parent item', () => {
+    const list = parseMarkdown('- parent\n  - child one\n  - child two');
+    expect(list).toHaveLength(1);
+    const items = list[0].children || [];
+    expect(items).toHaveLength(1);
+    expect(items[0].content).toBe('parent');
+    const nested = items[0].children || [];
+    expect(nested).toHaveLength(1);
+    expect(nested[0].type).toBe('list');
+    expect(nested[0].children).toHaveLength(2);
+  });
+
+  it('should honour the start number of an ordered list', () => {
+    const list = parseMarkdown('3. three\n4. four')[0];
+    expect(list.attrs?.start).toBe(3);
+  });
+});
+
+describe('Table cells', () => {
+  it('should keep formatting in header and body cells', () => {
+    const table = parseMarkdown('| **H** | B |\n|---|---|\n| `code` | [l](https://e.com) |')[0];
+    expect(table.attrs?.headerSpans[0][0].bold).toBe(true);
+    expect(table.attrs?.rowSpans[0][0][0].code).toBe(true);
+    expect(table.attrs?.rowSpans[0][1][0].link).toBe('https://e.com');
+  });
+});

@@ -46,7 +46,16 @@ This flag lets the PDF generator skip the heavier math-processing path for ordin
 
 ### Text extraction
 
-Inline formatting tokens (bold `**`, italic `*`, code spans, links) are flattened to plain text. The PDF generator uses PDFKit's built-in font variants (Helvetica, Helvetica-Bold, etc.) rather than markdown-it's HTML output.
+Every block that holds inline content is extracted twice:
+
+- `content` — plain text, used for math detection and as a fallback
+- `spans` — `InlineSpan[]`, one run per stretch of uniform formatting (`bold`, `italic`, `code`, `link`)
+
+Renderers prefer `spans` and map each run onto a PDFKit built-in font (Helvetica, Helvetica-Bold, Courier, ...). Links are drawn in blue and stay clickable.
+
+A `softbreak` (a plain newline in the source) is preserved as `\n` instead of being collapsed to a space, so a document written one sentence per line keeps that shape in the PDF. `renderInlineSpans()` splits runs on `\n` and renders one source line at a time, because PDFKit misplaces the line following a newline inside a `continued` run.
+
+List items keep their nested blocks (sub-lists, code blocks) in `children`, which the generator renders indented one level deeper.
 
 ---
 

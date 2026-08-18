@@ -14,11 +14,12 @@ describe('Standard Renderers', () => {
   let ctx: RenderContext;
 
   beforeEach(() => {
-    const rectChain = {
+    const rectChain: any = {
       fillAndStroke: vi.fn().mockReturnThis(),
       fill: vi.fn().mockReturnThis(),
       stroke: vi.fn().mockReturnThis(),
     };
+    rectChain.lineWidth = vi.fn().mockReturnValue(rectChain);
 
     const lineChain = {
       lineWidth: vi.fn().mockReturnValue({
@@ -33,6 +34,8 @@ describe('Standard Renderers', () => {
       fillColor: vi.fn().mockReturnThis(),
       text: vi.fn().mockReturnThis(),
       moveDown: vi.fn().mockReturnThis(),
+      widthOfString: vi.fn().mockReturnValue(60),
+      heightOfString: vi.fn().mockReturnValue(12),
       addPage: vi.fn().mockReturnThis(),
       rect: vi.fn().mockReturnValue(rectChain),
       moveTo: vi.fn().mockReturnValue({
